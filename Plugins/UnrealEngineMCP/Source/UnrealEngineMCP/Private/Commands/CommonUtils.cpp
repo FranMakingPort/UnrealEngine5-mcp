@@ -1295,6 +1295,22 @@ TArray<TSharedPtr<FJsonValue>> FCommonUtils::NodePinsToJson(UEdGraphNode* Node)
 			PinObj->SetStringField(TEXT("sub_type"), Pin->PinType.PinSubCategoryObject->GetName());
 		}
 
+		if (Pin->LinkedTo.Num() > 0)
+		{
+			TArray<TSharedPtr<FJsonValue>> LinkedToArray;
+			for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
+			{
+				if (!LinkedPin) continue;
+
+				UEdGraphNode* OwningNode = LinkedPin->GetOwningNode();
+				TSharedPtr<FJsonObject> LinkObj = MakeShared<FJsonObject>();
+				LinkObj->SetStringField(TEXT("node_id"), OwningNode ? OwningNode->NodeGuid.ToString() : TEXT(""));
+				LinkObj->SetStringField(TEXT("pin_name"), LinkedPin->PinName.ToString());
+				LinkedToArray.Add(MakeShared<FJsonValueObject>(LinkObj));
+			}
+			PinObj->SetArrayField(TEXT("linked_to"), LinkedToArray);
+		}
+
 		PinsArray.Add(MakeShared<FJsonValueObject>(PinObj));
 	}
 
