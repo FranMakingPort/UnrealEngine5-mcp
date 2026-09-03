@@ -3,6 +3,7 @@
 #include "Dom/JsonObject.h"
 #include "Kismet2/CompilerResultsLog.h"
 #include "Engine/Blueprint.h"
+#include "WidgetBlueprint.h"
 #include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/InheritableComponentHandler.h"
 #include "Factories/BlueprintFactory.h"
@@ -204,6 +205,10 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleCommand(const FString& Command
 	else if (CommandType == TEXT("get_blueprint_variables"))
 	{
 		return HandleGetBlueprintVariables(Params);
+	}
+	else if (CommandType == TEXT("get_widget_bindings"))
+	{
+		return HandleGetWidgetBindings(Params);
 	}
 	else if (CommandType == TEXT("add_property_get_set_node"))
 	{
@@ -7225,6 +7230,50 @@ TSharedPtr<FJsonObject> FBlueprintCommands::HandleGetBlueprintVariables(const TS
 	ResultObj->SetStringField(TEXT("blueprint"), BlueprintName);
 	ResultObj->SetArrayField(TEXT("variables"), Variables);
 	ResultObj->SetNumberField(TEXT("count"), Variables.Num());
+	return ResultObj;
+}
+
+TSharedPtr<FJsonObject> FBlueprintCommands::HandleGetWidgetBindings(const TSharedPtr<FJsonObject>& Params)
+{
+	FString BlueprintName;
+	if (!Params->TryGetStringField(TEXT("blueprint_name"), BlueprintName))
+	{
+		return FCommonUtils::CreateErrorResponse(TEXT("Missing 'blueprint_name' parameter"));
+	}
+
+	FString BlueprintPath = TEXT("/Game/Blueprints/");
+	Params->TryGetStringField(TEXT("blueprint_path"), BlueprintPath);
+
+	UBlueprint* Blueprint = FCommonUtils::FindBlueprint(BlueprintName, BlueprintPath);
+	if (!Blueprint)
+	{
+		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("Blueprint not found: %s"), *BlueprintName));
+	}
+
+	UWidgetBlueprint* WidgetBlueprint = Cast<UWidgetBlueprint>(Blueprint);
+	if (!WidgetBlueprint)
+	{
+		return FCommonUtils::CreateErrorResponse(FString::Printf(TEXT("'%s' is not a Widget Blueprint"), *BlueprintName));
+	}
+
+	// Bindings is editor-only data on UWidgetBlueprint (not exposed to Blueprint/Python), so this
+	// is the only way to map a "GetText_X"/"GetVisibility_X" binding function back to the widget
+	// (hierarchy element) and property it drives.
+	TArray<TSharedPtr<FJsonValue>> BindingsArray;
+	for (const FDelegateEditorBinding& Binding : WidgetBlueprint->Bindings)
+	{
+		TSharedPtr<FJsonObject> BindingObj = MakeShared<FJsonObject>();
+		BindingObj->SetStringField(TEXT("widget_name"), Binding.ObjectName);
+		BindingObj->SetStringField(TEXT("property_name"), Binding.PropertyName.ToString());
+		BindingObj->SetStringField(TEXT("function_name"), Binding.FunctionName.ToString());
+		BindingsArray.Add(MakeShared<FJsonValueObject>(BindingObj));
+	}
+
+	TSharedPtr<FJsonObject> ResultObj = MakeShared<FJsonObject>();
+	ResultObj->SetBoolField(TEXT("success"), true);
+	ResultObj->SetStringField(TEXT("blueprint"), BlueprintName);
+	ResultObj->SetArrayField(TEXT("bindings"), BindingsArray);
+	ResultObj->SetNumberField(TEXT("count"), BindingsArray.Num());
 	return ResultObj;
 }
 

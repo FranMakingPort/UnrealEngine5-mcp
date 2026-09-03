@@ -1267,6 +1267,19 @@ def register_blueprint_tools(mcp: FastMCP):
             "blueprint_path": blueprint_path
         })
 
+    @mcp.tool()
+    def get_widget_bindings(
+        blueprint_name: str,
+        blueprint_path: str
+    ) -> Dict[str, Any]:
+        """Get UMG property bindings on a Widget Blueprint. Returns, per binding, the widget_name
+        (hierarchy element in the Designer), property_name (e.g. Text, Visibility), and
+        function_name (the auto-generated GetText_X/GetVisibility_X graph). Widget Blueprints only."""
+        return get_unreal_client().execute_command("get_widget_bindings", {
+            "blueprint_name": blueprint_name,
+            "blueprint_path": blueprint_path
+        })
+
     # =========================================================================
     # Blueprint Analysis Tools
     # =========================================================================

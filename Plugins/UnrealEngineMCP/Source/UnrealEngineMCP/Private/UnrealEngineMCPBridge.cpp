@@ -229,6 +229,7 @@ FString UUnrealEngineMCPBridge::ExecuteCommandInternal(const FString& CommandTyp
 				 CommandType == TEXT("delete_pin") ||
 				 CommandType == TEXT("get_class_properties") ||
 				 CommandType == TEXT("get_blueprint_variables") ||
+				 CommandType == TEXT("get_widget_bindings") ||
 				 CommandType == TEXT("add_property_get_set_node") ||
 				 CommandType == TEXT("get_pin_value"))
 		{

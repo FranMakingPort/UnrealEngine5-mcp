@@ -69,6 +69,9 @@ private:
 	TSharedPtr<FJsonObject> HandleGetClassProperties(const TSharedPtr<FJsonObject>& Params);
 	TSharedPtr<FJsonObject> HandleGetBlueprintVariables(const TSharedPtr<FJsonObject>& Params);
 
+	// UMG widget binding introspection (Widget Blueprints only)
+	TSharedPtr<FJsonObject> HandleGetWidgetBindings(const TSharedPtr<FJsonObject>& Params);
+
 	// External property node
 	TSharedPtr<FJsonObject> HandleAddPropertyGetSetNode(const TSharedPtr<FJsonObject>& Params);
 
